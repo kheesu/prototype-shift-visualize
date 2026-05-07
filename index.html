@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Embedding Drift Viewer</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 20px; max-width: 1400px; margin: 0 auto; background-color: #f9f9f9; color: #333;}
+        .header { margin-bottom: 20px; }
+        .controls { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 30px; display: flex; gap: 30px; align-items: center; }
+        .control-group { display: flex; flex-direction: column; gap: 5px; font-weight: bold;}
+        select { padding: 8px 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; }
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); text-align: center; }
+        h3 { margin-top: 0; color: #555; text-transform: uppercase; letter-spacing: 1px;}
+        img { max-width: 100%; height: auto; border-radius: 5px; }
+        .error-state { padding: 50px 20px; color: #888; background: #f0f0f0; border-radius: 5px; display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>📈 YoY Embedding Drift Viewer</h1>
+        <p>Select a category and dataset to compare dimensionality reduction algorithms.</p>
+    </div>
+
+    <div class="controls">
+        <div class="control-group">
+            <label for="categorySelect">1. Choose a Category</label>
+            <select id="categorySelect"></select>
+        </div>
+        <div class="control-group">
+            <label for="datasetSelect">2. Choose a Dataset</label>
+            <select id="datasetSelect"></select>
+        </div>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <h3>PCA</h3>
+            <img id="img-pca" src="" alt="PCA Plot" onerror="handleError(this)">
+            <div id="err-pca" class="error-state">Image not found</div>
+        </div>
+        <div class="card">
+            <h3>t-SNE</h3>
+            <img id="img-tsne" src="" alt="t-SNE Plot" onerror="handleError(this)">
+            <div id="err-tsne" class="error-state">Image not found</div>
+        </div>
+        <div class="card">
+            <h3>ICA</h3>
+            <img id="img-ica" src="" alt="ICA Plot" onerror="handleError(this)">
+            <div id="err-ica" class="error-state">Image not found</div>
+        </div>
+        <div class="card">
+            <h3>UMAP</h3>
+            <img id="img-umap" src="" alt="UMAP Plot" onerror="handleError(this)">
+            <div id="err-umap" class="error-state">Image not found</div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const BASE_DIR = "./visualizations/yoy";
+        const VIS_TYPE = "scatter"; // Change to "kde" if you generated density plots
+        
+        const datasets = ["clip-text", "deberta-text", "clip-image", "dino-image"];
+        const categories = [
+            "airplane", "basketball", "bicycle", "broccoli", "burger", "bus", "canoe", "car", "cat",
+            "chair", "church", "columbine", "cosmos", "crocodile", "cupcakes", "dog", "donkey", "dress",
+            "duck", "elephant", "fish", "frog", "gorilla", "greenhouse", "headphones", "helicopter",
+            "horse", "house", "iris", "kite", "laptop", "lavender", "leopard", "lion", "motorcycle",
+            "mug", "mushroom", "orchid", "pancakes", "pasta", "pillow", "poppy", "rabbit", "restaurant",
+            "rose", "scarf", "snake", "sneakers", "sofa", "spoon", "stove", "strawberry", "suit",
+            "sunflower", "sushi", "tie", "tomato", "truck", "tulip", "turtle", "yacht", "zebra"
+        ];
+
+        const dsSelect = document.getElementById('datasetSelect');
+        const catSelect = document.getElementById('categorySelect');
+
+        // Populate Dropdowns
+        datasets.forEach(d => dsSelect.add(new Option(d, d)));
+        categories.forEach(c => catSelect.add(new Option(c, c)));
+
+        function handleError(imgElement) {
+            imgElement.style.display = 'none';
+            imgElement.nextElementSibling.style.display = 'block';
+        }
+
+        function updateImages() {
+            const ds = dsSelect.value;
+            const cat = catSelect.value;
+            const algos = ['pca', 'tsne', 'ica', 'umap'];
+
+            algos.forEach(algo => {
+                const img = document.getElementById(`img-${algo}`);
+                const errDiv = document.getElementById(`err-${algo}`);
+                
+                // Reset display states
+                img.style.display = 'block';
+                errDiv.style.display = 'none';
+
+                // Replicate the Python file naming logic
+                let fileName = algo === 'pca' 
+                    ? `${cat}_${VIS_TYPE}_drift.png` 
+                    : `${cat}_${algo}_${VIS_TYPE}_drift.png`;
+                
+                // Set the new source path
+                img.src = `${BASE_DIR}/${ds}-${algo}/${fileName}`;
+            });
+        }
+
+        // Listeners
+        dsSelect.addEventListener('change', updateImages);
+        catSelect.addEventListener('change', updateImages);
+
+        // Initialize first load
+        updateImages();
+    </script>
+</body>
+</html>
